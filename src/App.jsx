@@ -226,6 +226,7 @@ function App() {
                   <img
                     src={destination.image}
                     alt={destination.title}
+                    loading="lazy"
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
                   />
                   <span
@@ -366,7 +367,7 @@ function App() {
               exit={{ opacity: 0, y: 20, scale: 0.96 }}
               className="mb-3 flex h-[460px] w-[calc(100vw-2rem)] max-w-[360px] flex-col overflow-hidden rounded-3xl border border-gold/35 bg-[#12131dcc] shadow-2xl shadow-black/45 backdrop-blur"
             >
-              <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+              <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3">
                 <div>
                   <p className="font-medium text-gold">Assistant TimeTravel</p>
                   <p className="text-xs text-ivory/70">
@@ -376,7 +377,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => setChatOpen(false)}
-                  className="text-sm text-ivory/70 transition hover:text-gold"
+                  className="mt-0.5 shrink-0 whitespace-nowrap text-sm text-ivory/70 transition hover:text-gold"
                 >
                   Fermer
                 </button>

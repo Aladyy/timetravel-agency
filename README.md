@@ -1,143 +1,121 @@
-# TimeTravel Agency - Webapp Vibe Coding
+# TimeTravel Agency - Webapp Interactive
 
-Application SPA moderne et interactive pour découvrir 3 destinations temporelles, dialoguer avec un assistant IA et simuler une réservation premium.
+Webapp premium pour découvrir trois époques, discuter avec un assistant IA et obtenir une recommandation personnalisée avant réservation.
 
-## Objectif
+URL publique : [https://aladyy.github.io/timetravel-agency/](https://aladyy.github.io/timetravel-agency/)
 
-Offrir une expérience immersive autour de :
-- `Paris 1889`
-- `Crétacé`
-- `Florence 1504`
+## Stack technique
 
-## Stack Technique
-
-- `Cursor` (vibe coding / génération assistée)
-- `React 19`
-- `Vite 8`
+- `React 19` + `Vite 8`
 - `Tailwind CSS 4`
 - `Framer Motion`
 - `Lucide React`
-- API optionnelle: `OpenAI Chat Completions` (fallback local inclus)
+- Déploiement `GitHub Pages` via `GitHub Actions`
+- IA : `Mistral API` (agent conversations), fallback `OpenRouter`, fallback local
 
-## Fonctionnalités
+## Fonctionnalités implémentées
 
-- Hero section sombre et luxueuse avec animation d'entrée
-- Navigation sticky (Header)
-- Galerie de 3 cartes destinations avec hover effects
-- Animations de scroll et transitions avec Framer Motion
-- Chatbot flottant:
-  - roleplay "Assistant de luxe passionné d'histoire"
-  - connaissances des 3 destinations
-  - fallback local sans clé API
-  - intégration API OpenAI si `VITE_OPENAI_API_KEY` est fournie
-- Mini-quiz bonus (4 questions) pour recommander une destination
-- Simulation de réservation (CTA)
+- Landing immersive avec hero vidéo (filtrée) et design sombre luxe
+- Galerie interactive des 3 destinations Session 1 :
+  - Paris 1889
+  - Crétacé
+  - Florence 1504
+- Cards avec hover, badges de risque et responsive mobile
+- Chatbot flottant avec continuité conversationnelle (mode agent Mistral)
+- Quiz en 4 étapes avec barre de progression et recommandation personnalisée
+- CTA de simulation de réservation
 
-## Arborescence utile
+## Correspondance avec les critères d'évaluation
 
-- `src/App.jsx` -> structure de la SPA, UI et interactions
-- `src/data/destinations.js` -> données destinations
-- `src/utils/chatAssistant.js` -> logique du chatbot (API + fallback)
-- `public/assets/` -> visuels des destinations
+### Technique (8/8 visé)
+- Webapp fonctionnelle et déployée en public
+- Structure claire (`src/data`, `src/utils`, composants dans `App.jsx`)
+- Assets Session 1 intégrés dans `public/assets`
+- Intégration des outils IA pertinente (modes IA, fallback, robustesse)
 
-## Prompts IA utilisés (transparence)
+### Fonctionnalités IA (6/6 visé)
+- Agent conversationnel opérationnel (Mistral `conversations`)
+- Personnalisation via quiz (automatisation de recommandation)
+- Réponses contextualisées sur les 3 destinations + budget/sécurité
 
-Exemples de prompts utilisés dans Cursor pour produire cette version :
+### UX/UI & Créativité (4/4 visé)
+- Thème premium cohérent (sombre + accents dorés)
+- Navigation intuitive, sections lisibles
+- Animations subtiles (hero + scroll + hover)
+- Expérience fluide desktop/mobile
 
-1. "Génère une SPA interactive pour TimeTravel Agency avec React et Tailwind CSS. Structure : Header, Hero section sombre animée, galerie de 3 cards (Paris 1889, Crétacé, Florence 1504), chatbot flottant."
-2. "Rends le design plus luxueux avec accents dorés, contraste élevé, animations subtiles au scroll et au hover."
-3. "Ajoute un assistant conversationnel chaleureux et professionnel spécialisé en histoire, avec un mode fallback local."
-4. "Ajoute un mini-quiz de 4 questions qui recommande une destination."
+### Documentation & Open Source (2/2 visé)
+- README complet (stack, setup, déploiement, IA)
+- Transparence sur prompts et outils IA
+- Crédits et réflexion de processus documentés
 
-## Lancer en local
+## Configuration IA
+
+Copier `.env.example` en `.env` puis choisir un mode.
+
+### Option recommandée : Agent Mistral (publique)
+
+```bash
+VITE_MISTRAL_API_KEY=...
+VITE_MISTRAL_AGENT_ID=ag_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_MISTRAL_AGENT_VERSION=2
+VITE_MISTRAL_MODEL=mistral-small-latest
+```
+
+### Option alternative gratuite : OpenRouter
+
+```bash
+VITE_OPENROUTER_API_KEY=sk-or-...
+VITE_OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
+```
+
+### Option backend proxy sécurisé
+
+```bash
+VITE_CHAT_API_URL=https://ton-backend-chat.exemple/api/chat
+```
+
+Le widget affiche le mode actif (`Mode Agent Mistral`, `Mode IA gratuit`, etc.).
+
+## Installation et lancement
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Configuration IA (optionnelle)
-
-1. Copier `.env.example` en `.env`
-2. Choisir un mode:
-
-- **Mode recommandé (production / GitHub Pages)** : backend proxy sécurisé
-- **Mode Agent Mistral (recommandé sans backend)** : endpoint `conversations`
-- **Mode Mistral Small (API directe)** : `mistral-small-latest`
-- **Mode gratuit rapide** : OpenRouter avec modèle `:free`
-- **Mode rapide (dev local uniquement)** : clé API directe dans Vite
-
-3. Renseigner:
-
-```bash
-# Option 1 - Recommandé (frontend statique + backend séparé)
-VITE_CHAT_API_URL=https://ton-backend-chat.exemple/api/chat
-
-# Option 2 - Gratuit (OpenRouter + modèle free)
-VITE_OPENROUTER_API_KEY=sk-or-...
-VITE_OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
-
-# Option 3 - Mistral Small (API)
-VITE_MISTRAL_API_KEY=...
-VITE_MISTRAL_MODEL=mistral-small-latest
-VITE_MISTRAL_AGENT_ID=ag_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-VITE_MISTRAL_AGENT_VERSION=2
-
-# Option 4 - Local/dev uniquement (clé visible dans le bundle)
-VITE_OPENAI_API_KEY=sk-...
-```
-
-Sans configuration API, le chatbot fonctionne en mode local (réponses contextuelles prédéfinies).
-
-### Obtenir un chatbot IA gratuit
-
-1. Créer un compte sur OpenRouter (plan gratuit)
-2. Générer une clé API
-3. Utiliser un modèle marqué `:free`
-4. Ajouter les variables dans `.env` (local) ou dans les Secrets GitHub
-
-Le widget affiche automatiquement le mode actif:
-- `Mode Agent Mistral`
-- `Mode IA Mistral Small`
-- `Mode IA gratuit (OpenRouter)`
-- `Mode API sécurisé`
-- `Mode local (sans API)`
-
-## Build production
+Build production :
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Déploiement
+## Déploiement GitHub Pages
 
-### GitHub Pages (frontend)
+1. Push sur `main`
+2. Workflow `Deploy to GitHub Pages` se lance automatiquement
+3. Vérifier les secrets/variables dans `Settings > Secrets and variables > Actions` :
+   - `VITE_MISTRAL_API_KEY` (secret)
+   - `VITE_MISTRAL_AGENT_ID` (variable)
+   - `VITE_MISTRAL_AGENT_VERSION` (variable)
+   - `VITE_MISTRAL_MODEL` (variable)
 
-1. Pousser le projet sur GitHub
-2. Activer GitHub Pages via GitHub Actions (build Vite)
-3. Publier le dossier `dist`
-4. Pour un chatbot IA en production, configurer `VITE_CHAT_API_URL` vers un backend externe
+## Prompts IA utilisés (transparence)
 
-> Important : GitHub Pages est statique. Ne stockez pas de clé API secrète directement dans le frontend.
+1. "Génère une SPA interactive pour TimeTravel Agency avec React et Tailwind CSS..."
+2. "Rends le design plus luxueux avec accents dorés, contraste élevé..."
+3. "Ajoute un assistant conversationnel chaleureux et professionnel..."
+4. "Ajoute un mini-quiz de 4 questions qui recommande une destination."
+5. "Fiabilise le chatbot multi-tour avec retry, gestion d'erreurs et fallback."
 
-### Vercel
+## Crédits
 
-1. Importer le repo dans Vercel
-2. Framework détecté : `Vite`
-3. Build command: `npm run build`
-4. Output directory: `dist`
-5. Ajouter `VITE_OPENAI_API_KEY` dans les variables d'environnement (optionnel)
+- Visuels des destinations : Session 1 (groupe projet)
+- Vidéo hero vortex : YouTube (lien fourni pendant le développement)
+- Librairies : React, Vite, Tailwind, Framer Motion, Lucide
+- API IA : Mistral, OpenRouter (fallback)
 
-### Netlify
+## Réflexion sur le processus
 
-1. New site from Git
-2. Build command: `npm run build`
-3. Publish directory: `dist`
-4. Ajouter `VITE_OPENAI_API_KEY` (optionnel)
-
-## Livrables attendus
-
-- URL publique (Vercel ou Netlify)
-- Code source (repo)
-- README complet (ce document)
+Le projet a été construit par itérations courtes orientées critères d'évaluation : structure front d'abord, puis UX/UI, puis IA et enfin durcissement production. Le principal défi a été la fiabilité conversationnelle en public (quotas, erreurs API, continuité de session). Pour y répondre, nous avons ajouté un mode agent Mistral avec conservation du `conversation_id`, des retries, et des fallbacks explicites pour éviter une expérience trompeuse. La partie responsive a aussi été ajustée (badges de risque, lisibilité mobile, widget chat). Cette approche a permis de garder une webapp stable, cohérente et démontrable pour la soutenance.
