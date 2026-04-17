@@ -30,6 +30,16 @@ jobs:
       - name: Install deps
         run: npm install --no-audit --no-fund
 
+      - name: Validate OpenRouter secret
+        env:
+          VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
+        run: |
+          if [ -z "$VITE_OPENROUTER_API_KEY" ]; then
+            echo "VITE_OPENROUTER_API_KEY manquant: build abort pour eviter un chatbot en mode local."
+            exit 1
+          fi
+          echo "OpenRouter secret detecte."
+
       - name: Build app
         run: npm run build
         env:
