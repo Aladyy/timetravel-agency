@@ -50,10 +50,12 @@ function getLocalReply(message) {
 
 function getAssistantMode() {
   const externalApiUrl = import.meta.env.VITE_CHAT_API_URL
+  const mistralKey = import.meta.env.VITE_MISTRAL_API_KEY
   const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
 
   if (externalApiUrl) return 'proxy'
+  if (mistralKey) return 'mistral'
   if (openRouterKey) return 'openrouter-free'
   if (apiKey) return 'direct'
   return 'local'
@@ -62,6 +64,7 @@ function getAssistantMode() {
 export function getAssistantModeLabel() {
   const mode = getAssistantMode()
   if (mode === 'proxy') return 'Mode API sécurisé'
+  if (mode === 'mistral') return 'Mode IA Mistral Small'
   if (mode === 'openrouter-free') return 'Mode IA gratuit (OpenRouter)'
   if (mode === 'direct') return 'Mode API direct'
   return 'Mode local (sans API)'
@@ -69,6 +72,8 @@ export function getAssistantModeLabel() {
 
 export async function getAssistantReply(history) {
   const externalApiUrl = import.meta.env.VITE_CHAT_API_URL
+  const mistralKey = import.meta.env.VITE_MISTRAL_API_KEY
+  const mistralModel = import.meta.env.VITE_MISTRAL_MODEL || 'mistral-small-latest'
   const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY
   const openRouterModel =
     import.meta.env.VITE_OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free'
@@ -100,6 +105,31 @@ export async function getAssistantReply(history) {
       }
     } catch {
       // En cas d'echec du backend externe, on retombe en mode local.
+    }
+  }
+
+  if (mistralKey) {
+    try {
+      const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${mistralKey}`,
+        },
+        body: JSON.stringify({
+          model: mistralModel,
+          temperature: 0.7,
+          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const reply = data?.choices?.[0]?.message?.content?.trim()
+        if (reply) return reply
+      }
+    } catch {
+      // En cas d'echec API Mistral, on essaie les autres modes.
     }
   }
 

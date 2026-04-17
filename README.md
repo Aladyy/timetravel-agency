@@ -62,6 +62,7 @@ npm run dev
 2. Choisir un mode:
 
 - **Mode recommandé (production / GitHub Pages)** : backend proxy sécurisé
+- **Mode Mistral Small (API directe)** : `mistral-small-latest`
 - **Mode gratuit rapide** : OpenRouter avec modèle `:free`
 - **Mode rapide (dev local uniquement)** : clé API directe dans Vite
 
@@ -75,7 +76,11 @@ VITE_CHAT_API_URL=https://ton-backend-chat.exemple/api/chat
 VITE_OPENROUTER_API_KEY=sk-or-...
 VITE_OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
 
-# Option 3 - Local/dev uniquement (clé visible dans le bundle)
+# Option 3 - Mistral Small (API)
+VITE_MISTRAL_API_KEY=...
+VITE_MISTRAL_MODEL=mistral-small-latest
+
+# Option 4 - Local/dev uniquement (clé visible dans le bundle)
 VITE_OPENAI_API_KEY=sk-...
 ```
 
@@ -89,6 +94,7 @@ Sans configuration API, le chatbot fonctionne en mode local (réponses contextue
 4. Ajouter les variables dans `.env` (local) ou dans les Secrets GitHub
 
 Le widget affiche automatiquement le mode actif:
+- `Mode IA Mistral Small`
 - `Mode IA gratuit (OpenRouter)`
 - `Mode API sécurisé`
 - `Mode local (sans API)`

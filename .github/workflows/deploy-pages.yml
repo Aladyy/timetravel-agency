@@ -30,20 +30,23 @@ jobs:
       - name: Install deps
         run: npm install --no-audit --no-fund
 
-      - name: Validate OpenRouter secret
+      - name: Validate AI secret
         env:
+          VITE_MISTRAL_API_KEY: ${{ secrets.VITE_MISTRAL_API_KEY }}
           VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
         run: |
-          if [ -z "$VITE_OPENROUTER_API_KEY" ]; then
-            echo "VITE_OPENROUTER_API_KEY manquant: build abort pour eviter un chatbot en mode local."
+          if [ -z "$VITE_MISTRAL_API_KEY" ] && [ -z "$VITE_OPENROUTER_API_KEY" ]; then
+            echo "Aucune cle IA configuree (Mistral/OpenRouter): build abort pour eviter un chatbot en mode local."
             exit 1
           fi
-          echo "OpenRouter secret detecte."
+          echo "Configuration IA detectee."
 
       - name: Build app
         run: npm run build
         env:
           VITE_CHAT_API_URL: ${{ secrets.VITE_CHAT_API_URL }}
+          VITE_MISTRAL_API_KEY: ${{ secrets.VITE_MISTRAL_API_KEY }}
+          VITE_MISTRAL_MODEL: ${{ vars.VITE_MISTRAL_MODEL }}
           VITE_OPENAI_API_KEY: ${{ secrets.VITE_OPENAI_API_KEY }}
           VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
           VITE_OPENROUTER_MODEL: ${{ vars.VITE_OPENROUTER_MODEL }}
