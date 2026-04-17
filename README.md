@@ -62,6 +62,7 @@ npm run dev
 2. Choisir un mode:
 
 - **Mode recommandé (production / GitHub Pages)** : backend proxy sécurisé
+- **Mode Agent Mistral (recommandé sans backend)** : endpoint `conversations`
 - **Mode Mistral Small (API directe)** : `mistral-small-latest`
 - **Mode gratuit rapide** : OpenRouter avec modèle `:free`
 - **Mode rapide (dev local uniquement)** : clé API directe dans Vite
@@ -79,6 +80,8 @@ VITE_OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
 # Option 3 - Mistral Small (API)
 VITE_MISTRAL_API_KEY=...
 VITE_MISTRAL_MODEL=mistral-small-latest
+VITE_MISTRAL_AGENT_ID=ag_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_MISTRAL_AGENT_VERSION=2
 
 # Option 4 - Local/dev uniquement (clé visible dans le bundle)
 VITE_OPENAI_API_KEY=sk-...
@@ -94,6 +97,7 @@ Sans configuration API, le chatbot fonctionne en mode local (réponses contextue
 4. Ajouter les variables dans `.env` (local) ou dans les Secrets GitHub
 
 Le widget affiche automatiquement le mode actif:
+- `Mode Agent Mistral`
 - `Mode IA Mistral Small`
 - `Mode IA gratuit (OpenRouter)`
 - `Mode API sécurisé`

@@ -1,6 +1,8 @@
 const SYSTEM_PROMPT =
   "Tu es l'expert de TimeTravel Agency. Tu connais Paris 1889, le Crétacé et Florence 1504. Réponds de manière chaleureuse et professionnelle, avec une touche luxe."
 const MAX_HISTORY_MESSAGES = 12
+let mistralConversationId = null
+let lastHistoryLength = 0
 
 const localKnowledge = {
   'paris 1889':
@@ -39,6 +41,31 @@ function extractReplyFromChoice(data) {
       .join(' ')
       .trim()
   }
+  return ''
+}
+
+function extractMistralConversationReply(data) {
+  const outputs = Array.isArray(data?.outputs) ? data.outputs : []
+
+  for (let index = outputs.length - 1; index >= 0; index -= 1) {
+    const item = outputs[index]
+    const candidate =
+      item?.content ??
+      item?.message?.content ??
+      item?.output_text ??
+      item?.text ??
+      item?.value
+
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim()
+    if (Array.isArray(candidate)) {
+      const joined = candidate
+        .map((chunk) => chunk?.text || chunk?.content || '')
+        .join(' ')
+        .trim()
+      if (joined) return joined
+    }
+  }
+
   return ''
 }
 
@@ -100,10 +127,12 @@ function getLocalReply(message) {
 function getAssistantMode() {
   const externalApiUrl = import.meta.env.VITE_CHAT_API_URL
   const mistralKey = import.meta.env.VITE_MISTRAL_API_KEY
+  const mistralAgentId = import.meta.env.VITE_MISTRAL_AGENT_ID
   const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
 
   if (externalApiUrl) return 'proxy'
+  if (mistralKey && mistralAgentId) return 'mistral-agent'
   if (mistralKey) return 'mistral'
   if (openRouterKey) return 'openrouter-free'
   if (apiKey) return 'direct'
@@ -113,6 +142,7 @@ function getAssistantMode() {
 export function getAssistantModeLabel() {
   const mode = getAssistantMode()
   if (mode === 'proxy') return 'Mode API sécurisé'
+  if (mode === 'mistral-agent') return 'Mode Agent Mistral'
   if (mode === 'mistral') return 'Mode IA Mistral Small'
   if (mode === 'openrouter-free') return 'Mode IA gratuit (OpenRouter)'
   if (mode === 'direct') return 'Mode API direct'
@@ -122,6 +152,8 @@ export function getAssistantModeLabel() {
 export async function getAssistantReply(history) {
   const externalApiUrl = import.meta.env.VITE_CHAT_API_URL
   const mistralKey = import.meta.env.VITE_MISTRAL_API_KEY
+  const mistralAgentId = import.meta.env.VITE_MISTRAL_AGENT_ID
+  const mistralAgentVersion = Number.parseInt(import.meta.env.VITE_MISTRAL_AGENT_VERSION || '2', 10)
   const mistralModel = import.meta.env.VITE_MISTRAL_MODEL || 'mistral-small-latest'
   const openRouterKey = import.meta.env.VITE_OPENROUTER_API_KEY
   const openRouterModel =
@@ -135,6 +167,12 @@ export async function getAssistantReply(history) {
     'google/gemma-2-9b-it:free',
   ]
   let hasExternalMode = false
+
+  // Si la conversation locale redemarre (refresh/reload), on reset le thread distant.
+  if (history.length < lastHistoryLength) {
+    mistralConversationId = null
+  }
+  lastHistoryLength = history.length
 
   if (externalApiUrl) {
     hasExternalMode = true
@@ -157,6 +195,61 @@ export async function getAssistantReply(history) {
       const data = await safeJson(response)
       const reply = data?.reply?.trim?.()
       if (reply) return reply
+    }
+  }
+
+  if (mistralKey && mistralAgentId) {
+    hasExternalMode = true
+    const userInput = userMessage || 'Bonjour'
+
+    if (!mistralConversationId) {
+      const createResponse = await postWithRetry(
+        'https://api.mistral.ai/v1/conversations',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${mistralKey}`,
+          },
+          body: JSON.stringify({
+            agent_id: mistralAgentId,
+            agent_version: Number.isNaN(mistralAgentVersion) ? 2 : mistralAgentVersion,
+            inputs: [{ role: 'user', content: userInput }],
+          }),
+        },
+        1,
+      )
+
+      if (createResponse?.ok) {
+        const data = await safeJson(createResponse)
+        mistralConversationId = data?.conversation_id || mistralConversationId
+        const reply = extractMistralConversationReply(data)
+        if (reply) return reply
+      }
+    } else {
+      const appendResponse = await postWithRetry(
+        `https://api.mistral.ai/v1/conversations/${mistralConversationId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${mistralKey}`,
+          },
+          body: JSON.stringify({
+            inputs: [{ role: 'user', content: userInput }],
+          }),
+        },
+        1,
+      )
+
+      if (appendResponse?.ok) {
+        const data = await safeJson(appendResponse)
+        mistralConversationId = data?.conversation_id || mistralConversationId
+        const reply = extractMistralConversationReply(data)
+        if (reply) return reply
+      } else if (appendResponse?.status === 404 || appendResponse?.status === 410) {
+        mistralConversationId = null
+      }
     }
   }
 
