@@ -62,6 +62,7 @@ npm run dev
 2. Choisir un mode:
 
 - **Mode recommandé (production / GitHub Pages)** : backend proxy sécurisé
+- **Mode gratuit rapide** : OpenRouter avec modèle `:free`
 - **Mode rapide (dev local uniquement)** : clé API directe dans Vite
 
 3. Renseigner:
@@ -70,11 +71,27 @@ npm run dev
 # Option 1 - Recommandé (frontend statique + backend séparé)
 VITE_CHAT_API_URL=https://ton-backend-chat.exemple/api/chat
 
-# Option 2 - Local/dev uniquement (clé visible dans le bundle)
+# Option 2 - Gratuit (OpenRouter + modèle free)
+VITE_OPENROUTER_API_KEY=sk-or-...
+VITE_OPENROUTER_MODEL=meta-llama/llama-3.1-8b-instruct:free
+
+# Option 3 - Local/dev uniquement (clé visible dans le bundle)
 VITE_OPENAI_API_KEY=sk-...
 ```
 
 Sans configuration API, le chatbot fonctionne en mode local (réponses contextuelles prédéfinies).
+
+### Obtenir un chatbot IA gratuit
+
+1. Créer un compte sur OpenRouter (plan gratuit)
+2. Générer une clé API
+3. Utiliser un modèle marqué `:free`
+4. Ajouter les variables dans `.env` (local) ou dans les Secrets GitHub
+
+Le widget affiche automatiquement le mode actif:
+- `Mode IA gratuit (OpenRouter)`
+- `Mode API sécurisé`
+- `Mode local (sans API)`
 
 ## Build production
 
