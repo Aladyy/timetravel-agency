@@ -10,11 +10,30 @@ const localKnowledge = {
     "Florence 1504 est idéale pour les amateurs d'art et d'histoire, avec accès privilégié aux ateliers de la Renaissance.",
 }
 
+function normalizeText(text) {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
 function getLocalReply(message) {
-  const lower = message.toLowerCase()
+  const lower = normalizeText(message)
 
   if (lower.includes('prix') || lower.includes('tarif') || lower.includes('budget')) {
     return 'Nos expériences débutent à 4 900 crédits temporels. Le tarif inclut transport chronologique, assurance paradoxale et concierge premium.'
+  }
+
+  if (lower.includes('reservation') || lower.includes('reserver') || lower.includes('booking')) {
+    return "Très bon choix. Pour réserver, indiquez-moi la destination, le nombre de voyageurs et votre fenêtre temporelle préférée. Je vous propose ensuite une formule premium adaptée."
+  }
+
+  if (lower.includes('conseil') || lower.includes('recommande') || lower.includes('choisir')) {
+    return "Si vous aimez l'élégance et la culture, Paris 1889 est idéal. Pour l'aventure pure, le Crétacé est imbattable. Si vous préférez l'art et le patrimoine, Florence 1504 est la meilleure option."
+  }
+
+  if (lower.includes('securite') || lower.includes('danger') || lower.includes('risque')) {
+    return "Nos circuits sont encadrés par un protocole de sécurité temporelle strict : balise de rappel chronologique, guide certifié et assurance paradoxale incluse."
   }
 
   if (lower.includes('paris')) return localKnowledge['paris 1889']
@@ -55,6 +74,11 @@ export async function getAssistantReply(history) {
     import.meta.env.VITE_OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free'
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
   const userMessage = history[history.length - 1]?.content ?? ''
+  const openRouterModels = [
+    openRouterModel,
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'google/gemma-2-9b-it:free',
+  ]
 
   if (externalApiUrl) {
     try {
@@ -80,27 +104,40 @@ export async function getAssistantReply(history) {
   }
 
   if (openRouterKey) {
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openRouterKey}`,
-        },
-        body: JSON.stringify({
-          model: openRouterModel,
-          temperature: 0.7,
-          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
-        }),
-      })
+    for (const model of openRouterModels) {
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openRouterKey}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'TimeTravel Agency',
+          },
+          body: JSON.stringify({
+            model,
+            temperature: 0.7,
+            messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+          }),
+        })
 
-      if (response.ok) {
-        const data = await response.json()
-        const reply = data?.choices?.[0]?.message?.content?.trim()
-        if (reply) return reply
+        if (response.ok) {
+          const data = await response.json()
+          const content = data?.choices?.[0]?.message?.content
+          const reply =
+            typeof content === 'string'
+              ? content.trim()
+              : Array.isArray(content)
+                ? content
+                    .map((item) => item?.text || '')
+                    .join(' ')
+                    .trim()
+                : ''
+          if (reply) return reply
+        }
+      } catch {
+        // On essaie le modèle free suivant.
       }
-    } catch {
-      // En cas d'echec API OpenRouter, on retombe en mode local.
     }
   }
 
