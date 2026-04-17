@@ -1,3 +1,5 @@
+const baseAssetPath = `${import.meta.env.BASE_URL}assets`
+
 export const destinations = [
   {
     id: 'paris-1889',
@@ -5,7 +7,7 @@ export const destinations = [
     era: 'Exposition universelle',
     description:
       "Assistez à l'inauguration de la Tour Eiffel, dînez sur les boulevards illuminés et rencontrez les artistes de la Belle Époque.",
-    image: '/assets/paris-1889.png',
+    image: `${baseAssetPath}/paris-1889.png`,
     atmosphere: 'Élégance, art de vivre, innovation',
     riskLevel: 'Faible',
   },
@@ -15,7 +17,7 @@ export const destinations = [
     era: "66 millions d'années avant notre ère",
     description:
       'Explorez une jungle préhistorique guidée par drone, observez les dinosaures en toute sécurité et vivez une aventure hors norme.',
-    image: '/assets/cretace.png',
+    image: `${baseAssetPath}/cretace.png`,
     atmosphere: 'Aventure, adrénaline, nature brute',
     riskLevel: 'Moyen',
   },
@@ -25,7 +27,7 @@ export const destinations = [
     era: 'Renaissance italienne',
     description:
       "Participez aux salons des Médicis, contemplez le David de Michel-Ange à sa révélation et apprenez des maîtres de l'époque.",
-    image: '/assets/florence-1504.png',
+    image: `${baseAssetPath}/florence-1504.png`,
     atmosphere: 'Culture, artisanat, raffinement',
     riskLevel: 'Faible',
   },
