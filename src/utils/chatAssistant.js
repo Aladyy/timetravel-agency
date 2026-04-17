@@ -1,5 +1,6 @@
 const SYSTEM_PROMPT =
   "Tu es l'expert de TimeTravel Agency. Tu connais Paris 1889, le Crétacé et Florence 1504. Réponds de manière chaleureuse et professionnelle, avec une touche luxe."
+const MAX_HISTORY_MESSAGES = 12
 
 const localKnowledge = {
   'paris 1889':
@@ -15,6 +16,54 @@ function normalizeText(text) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+}
+
+function getRecentHistory(history) {
+  return history.slice(-MAX_HISTORY_MESSAGES)
+}
+
+async function safeJson(response) {
+  try {
+    return await response.json()
+  } catch {
+    return null
+  }
+}
+
+function extractReplyFromChoice(data) {
+  const content = data?.choices?.[0]?.message?.content
+  if (typeof content === 'string') return content.trim()
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => item?.text || '')
+      .join(' ')
+      .trim()
+  }
+  return ''
+}
+
+async function postWithRetry(url, options, retries = 1) {
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(url, options)
+      if (response.ok) return response
+
+      // Retry on transient errors and quota burst.
+      if ((response.status === 429 || response.status >= 500) && attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)))
+        continue
+      }
+      return response
+    } catch {
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)))
+        continue
+      }
+      return null
+    }
+  }
+
+  return null
 }
 
 function getLocalReply(message) {
@@ -79,38 +128,43 @@ export async function getAssistantReply(history) {
     import.meta.env.VITE_OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free'
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY
   const userMessage = history[history.length - 1]?.content ?? ''
+  const recentHistory = getRecentHistory(history)
   const openRouterModels = [
     openRouterModel,
     'meta-llama/llama-3.1-8b-instruct:free',
     'google/gemma-2-9b-it:free',
   ]
+  let hasExternalMode = false
 
   if (externalApiUrl) {
-    try {
-      const response = await fetch(externalApiUrl, {
+    hasExternalMode = true
+    const response = await postWithRetry(
+      externalApiUrl,
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           systemPrompt: SYSTEM_PROMPT,
-          history,
+          history: recentHistory,
         }),
-      })
+      },
+      1,
+    )
 
-      if (response.ok) {
-        const data = await response.json()
-        const reply = data?.reply?.trim?.()
-        if (reply) return reply
-      }
-    } catch {
-      // En cas d'echec du backend externe, on retombe en mode local.
+    if (response?.ok) {
+      const data = await safeJson(response)
+      const reply = data?.reply?.trim?.()
+      if (reply) return reply
     }
   }
 
   if (mistralKey) {
-    try {
-      const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    hasExternalMode = true
+    const response = await postWithRetry(
+      'https://api.mistral.ai/v1/chat/completions',
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,24 +173,25 @@ export async function getAssistantReply(history) {
         body: JSON.stringify({
           model: mistralModel,
           temperature: 0.7,
-          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...recentHistory],
         }),
-      })
+      },
+      1,
+    )
 
-      if (response.ok) {
-        const data = await response.json()
-        const reply = data?.choices?.[0]?.message?.content?.trim()
-        if (reply) return reply
-      }
-    } catch {
-      // En cas d'echec API Mistral, on essaie les autres modes.
+    if (response?.ok) {
+      const data = await safeJson(response)
+      const reply = extractReplyFromChoice(data)
+      if (reply) return reply
     }
   }
 
   if (openRouterKey) {
+    hasExternalMode = true
     for (const model of openRouterModels) {
-      try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const response = await postWithRetry(
+        'https://openrouter.ai/api/v1/chat/completions',
+        {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -147,33 +202,25 @@ export async function getAssistantReply(history) {
           body: JSON.stringify({
             model,
             temperature: 0.7,
-            messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+            messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...recentHistory],
           }),
-        })
+        },
+        1,
+      )
 
-        if (response.ok) {
-          const data = await response.json()
-          const content = data?.choices?.[0]?.message?.content
-          const reply =
-            typeof content === 'string'
-              ? content.trim()
-              : Array.isArray(content)
-                ? content
-                    .map((item) => item?.text || '')
-                    .join(' ')
-                    .trim()
-                : ''
-          if (reply) return reply
-        }
-      } catch {
-        // On essaie le modèle free suivant.
+      if (response?.ok) {
+        const data = await safeJson(response)
+        const reply = extractReplyFromChoice(data)
+        if (reply) return reply
       }
     }
   }
 
   if (apiKey) {
-    try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    hasExternalMode = true
+    const response = await postWithRetry(
+      'https://api.openai.com/v1/chat/completions',
+      {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,18 +229,21 @@ export async function getAssistantReply(history) {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           temperature: 0.7,
-          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+          messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...recentHistory],
         }),
-      })
+      },
+      1,
+    )
 
-      if (response.ok) {
-        const data = await response.json()
-        const reply = data?.choices?.[0]?.message?.content?.trim()
-        if (reply) return reply
-      }
-    } catch {
-      // En cas d'echec reseau API, on retombe en mode local.
+    if (response?.ok) {
+      const data = await safeJson(response)
+      const reply = extractReplyFromChoice(data)
+      if (reply) return reply
     }
+  }
+
+  if (hasExternalMode) {
+    return "Je rencontre un souci temporaire avec le service IA (quota, indisponibilité ou clé). Réessayez dans quelques secondes ou vérifiez la configuration API."
   }
 
   return getLocalReply(userMessage)
