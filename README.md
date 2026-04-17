@@ -4,6 +4,14 @@ Webapp premium pour découvrir trois époques, discuter avec un assistant IA et 
 
 URL publique : [https://aladyy.github.io/timetravel-agency/](https://aladyy.github.io/timetravel-agency/)
 
+## Participant au projet YNOV
+
+- Amelie Boisliveau
+- Dassine SAHEB
+- Elsa AUBREE
+- Sandy Martins
+- Jules Hautecloche
+
 ## Stack technique
 
 - `React 19` + `Vite 8`

@@ -194,6 +194,33 @@ function App() {
               De Paris 1889 aux jungles du Crétacé, TimeTravel Agency vous propose des
               itinéraires immersifs, sécurisés et personnalisés.
             </MotionParagraph>
+            <MotionDiv
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="max-w-xl rounded-2xl border border-gold/35 bg-black/25 p-4 backdrop-blur-sm"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.9)]" />
+                <p className="text-sm font-medium text-gold">Assistant IA disponible en direct</p>
+              </div>
+              <p className="text-sm text-ivory/85">
+                Posez vos questions sur les époques, le budget et la sécurité. L'assistant
+                recommande la meilleure destination selon votre profil voyageur.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setChatOpen(true)}
+                  className="rounded-full border border-gold/60 bg-gold/10 px-4 py-2 text-sm font-medium text-gold transition hover:bg-gold hover:text-onyx"
+                >
+                  Ouvrir le chatbot IA
+                </button>
+                <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-ivory/75">
+                  Ex: "Quel voyage pour un budget de 5000 ?"
+                </span>
+              </div>
+            </MotionDiv>
           </div>
         </section>
 
@@ -426,14 +453,25 @@ function App() {
           ) : null}
         </AnimatePresence>
 
-        <button
-          type="button"
-          onClick={() => setChatOpen((open) => !open)}
-          className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/60 bg-gold text-onyx shadow-lg shadow-black/30 transition hover:scale-105"
-          aria-label="Ouvrir le chatbot"
-        >
-          <Sparkles className="h-6 w-6" />
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          {!chatOpen ? (
+            <div className="rounded-full border border-gold/30 bg-onyx/80 px-3 py-1 text-[11px] text-gold backdrop-blur-sm">
+              IA en ligne - Posez vos questions
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setChatOpen((open) => !open)}
+            className="group relative flex h-14 w-14 items-center justify-center rounded-full border border-gold/60 bg-gold text-onyx shadow-lg shadow-black/30 transition hover:scale-105"
+            aria-label="Ouvrir le chatbot"
+          >
+            {!chatOpen ? (
+              <span className="absolute -right-0.5 -top-0.5 inline-flex h-3 w-3 rounded-full bg-emerald-300 ring-2 ring-onyx" />
+            ) : null}
+            <span className="absolute inset-0 rounded-full bg-gold/50 opacity-0 blur-md transition group-hover:opacity-100" />
+            <Sparkles className="relative h-6 w-6" />
+          </button>
+        </div>
       </div>
     </div>
   )
