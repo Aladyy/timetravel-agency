@@ -30,8 +30,11 @@ URL publique : [https://aladyy.github.io/timetravel-agency/](https://aladyy.gith
   - Florence 1504
 - Cards avec hover, badges de risque et responsive mobile
 - Chatbot flottant avec continuité conversationnelle (mode agent Mistral)
-- Quiz en 4 étapes avec barre de progression et recommandation personnalisée
-- CTA de simulation de réservation
+- FAQ rapide connectée au chatbot (prompts cliquables)
+- Quiz en 4 étapes avec barre de progression, recommandation personnalisée et justification
+- Tunnel de réservation séparé du quiz, en faux parcours professionnel en 4 étapes
+- Auto-scroll du chatbot + fenêtre agrandie pour une meilleure lisibilité
+- Passe UI polish (typographie mobile, espacements, contraste des actions)
 
 ## Correspondance avec les critères d'évaluation
 
@@ -116,6 +119,28 @@ npm run preview
 3. "Ajoute un assistant conversationnel chaleureux et professionnel..."
 4. "Ajoute un mini-quiz de 4 questions qui recommande une destination."
 5. "Fiabilise le chatbot multi-tour avec retry, gestion d'erreurs et fallback."
+6. "Met en avant le chatbot IA dans l'interface (hero, CTA, prompts rapides)."
+
+## Tests réalisés
+
+- Test desktop (Chrome/Edge) : navigation sections, cards, quiz, chatbot
+- Test mobile (layout responsive) : cards, badge risque, widget chatbot
+- Test IA multi-tour :
+  - question 1 : préférence voyage
+  - question 2 : suivi contextuel budget/sécurité
+  - vérification du mode affiché (`Mode Agent Mistral`)
+- Test UX chatbot :
+  - auto-scroll au dernier message
+  - suggestions de questions cliquables
+  - confort de lecture renforcé (fenêtre plus grande)
+- Test fallback : vérification d'un message explicite en cas d'indisponibilité API
+- Qualité code : `npm run lint` et `npm run build` OK
+
+## Limites connues
+
+- API IA dépendante du quota et de la disponibilité réseau
+- GitHub Pages étant statique, les secrets sont injectés au build uniquement
+- La vidéo hero YouTube peut être bloquée selon certaines politiques navigateur/réseau
 
 ## Crédits
 
