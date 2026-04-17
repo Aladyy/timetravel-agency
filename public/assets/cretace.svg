@@ -1,0 +1,20 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#203247"/>
+      <stop offset="100%" stop-color="#0f1b28"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <ellipse cx="250" cy="120" rx="190" ry="70" fill="#d8f288" opacity="0.2"/>
+  <rect x="0" y="520" width="1200" height="280" fill="#1c3a2d"/>
+  <g fill="#2f5b42">
+    <circle cx="100" cy="540" r="130"/>
+    <circle cx="330" cy="560" r="150"/>
+    <circle cx="890" cy="570" r="160"/>
+    <circle cx="1120" cy="540" r="120"/>
+  </g>
+  <path d="M350 560 C420 430 620 420 700 520 C760 590 810 610 860 620 C760 640 710 680 660 720 C620 680 560 640 500 620 C430 610 390 590 350 560 Z" fill="#8fd17f"/>
+  <circle cx="615" cy="535" r="9" fill="#0a1a11"/>
+  <text x="70" y="110" fill="#d9efbd" font-size="56" font-family="Georgia, serif">Crétacé</text>
+</svg>
