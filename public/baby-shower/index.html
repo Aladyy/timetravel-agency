@@ -142,7 +142,7 @@
   const hint = document.getElementById('hint');
 
   // Option : forcer le résultat via ?resultat=fille ou ?resultat=garcon
-  const forced = (new URLSearchParams(location.search).get('resultat') || '').toLowerCase();
+  const forced = (new URLSearchParams(location.search).get('resultat') || location.hash.slice(1) || '').toLowerCase();
   const pick = () => forced.startsWith('fille') ? 'girl'
     : forced.startsWith('gar') ? 'boy'
     : (crypto.getRandomValues(new Uint32Array(1))[0] % 2 ? 'girl' : 'boy');
