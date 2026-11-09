@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Caisse Baby Shower</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #1a1d24; --line: #2a2f3a; --text: #e8e6e3; --muted: #8b909c;
+    --accent: #e9a23b; --girl: #ff5fa2; --boy: #3fa9ff; --gold: #ffd34d;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(ellipse at top, #1d2230 0%, var(--bg) 60%);
+    color: var(--text); font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    overflow-x: hidden; user-select: none;
+  }
+  header { text-align: center; margin: 8px 0 20px; }
+  .tag { display: inline-block; font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--accent); padding: 3px 10px; border-radius: 2px; }
+  h1 { font-size: clamp(26px, 8vw, 40px); margin: 12px 0 4px; letter-spacing: .04em; text-transform: uppercase; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0; }
+
+  .case { width: 100%; max-width: 720px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 16px 0; position: relative; }
+  .case-title { text-align: center; font-size: 13px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .15em; margin-bottom: 12px; }
+  .viewport { position: relative; overflow: hidden; height: 150px; background: #12141a;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .viewport::before, .viewport::after { content: ""; position: absolute; top: 0; bottom: 0; width: 18%;
+    z-index: 2; pointer-events: none; }
+  .viewport::before { left: 0; background: linear-gradient(90deg, #12141a, transparent); }
+  .viewport::after { right: 0; background: linear-gradient(-90deg, #12141a, transparent); }
+  .marker { position: absolute; left: 50%; top: 0; bottom: 0; width: 3px; margin-left: -1.5px;
+    background: var(--gold); z-index: 3; box-shadow: 0 0 10px var(--gold); }
+  .marker::before, .marker::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%);
+    border: 9px solid transparent; }
+  .marker::before { top: 0; border-top-color: var(--gold); }
+  .marker::after { bottom: 0; border-bottom-color: var(--gold); }
+  .strip { display: flex; height: 100%; will-change: transform; }
+  .item { flex: 0 0 120px; width: 120px; margin-right: 6px; height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; position: relative;
+    background: linear-gradient(180deg, #232733 0%, #1a1d26 100%); }
+  .item::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--c); }
+  .item .emoji { font-size: 56px; line-height: 1; filter: drop-shadow(0 0 14px var(--c)); }
+  .item .name { font-size: 12px; margin-top: 10px; font-weight: 600; color: var(--c); text-align: center; }
+  .item.girl { --c: var(--girl); }
+  .item.boy { --c: var(--boy); }
+
+  .loots { display: flex; gap: 10px; justify-content: center; margin-top: 16px; padding: 0 16px; }
+  .loot { flex: 1; max-width: 200px; border: 1px solid var(--line); border-bottom: 3px solid var(--c);
+    padding: 8px; text-align: center; font-size: 12px; color: var(--muted); border-radius: 3px; }
+  .loot b { display: block; color: var(--c); font-size: 13px; }
+  .loot.girl { --c: var(--girl); } .loot.boy { --c: var(--boy); }
+
+  button.open { margin-top: 24px; width: 100%; max-width: 420px; padding: 18px; font-size: 18px; font-weight: 800;
+    letter-spacing: .12em; text-transform: uppercase; color: #1a1205; border: 0; border-radius: 4px; cursor: pointer;
+    background: linear-gradient(180deg, #ffc35a, var(--accent)); box-shadow: 0 6px 24px rgba(233,162,59,.35);
+    transition: transform .1s, opacity .2s; }
+  button.open:active { transform: scale(.97); }
+  button.open:disabled { opacity: .4; cursor: default; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 10px; min-height: 16px; text-align: center; }
+
+  .reveal { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center;
+    background: rgba(5,6,8,.88); padding: 16px; }
+  .reveal.show { display: flex; animation: fade .3s ease; }
+  .card { width: 100%; max-width: 380px; text-align: center; background: var(--panel); border: 1px solid var(--line);
+    border-top: 4px solid var(--c); border-radius: 6px; padding: 28px 20px 22px; position: relative; overflow: hidden;
+    animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  .card::before { content: ""; position: absolute; inset: -50%; background:
+    conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--c) 30%, transparent), transparent 30%);
+    animation: spin 6s linear infinite; }
+  .card > * { position: relative; }
+  .card.girl { --c: var(--girl); } .card.boy { --c: var(--boy); }
+  .card .small { font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+  .card .big-emoji { font-size: 110px; margin: 10px 0; filter: drop-shadow(0 0 30px var(--c)); }
+  .card h2 { margin: 0; font-size: clamp(28px, 9vw, 40px); color: var(--c); text-transform: uppercase; letter-spacing: .05em; }
+  .card .wear { color: var(--muted); font-size: 13px; margin: 6px 0 20px; }
+  .card button { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .1em; border: 1px solid var(--line); background: #232733; color: var(--text); border-radius: 4px; }
+
+  .confetti { position: fixed; top: -20px; z-index: 11; width: 9px; height: 14px; pointer-events: none;
+    animation: fall linear forwards; }
+
+  @keyframes fade { from { opacity: 0 } }
+  @keyframes pop { from { transform: scale(.6); opacity: 0 } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+</style>
+</head>
+<body>
+  <header>
+    <span class="tag">Baby Shower</span>
+    <h1>Caisse Surprise</h1>
+    <p class="sub">Ouvre la caisse pour découvrir le loot</p>
+  </header>
+
+  <section class="case">
+    <div class="case-title">Caisse « Opération Bébé »</div>
+    <div class="viewport">
+      <div class="marker"></div>
+      <div class="strip" id="strip"></div>
+    </div>
+    <div class="loots">
+      <div class="loot girl"><b>★ Bébé Fille</b>50 %</div>
+      <div class="loot boy"><b>★ Bébé Garçon</b>50 %</div>
+    </div>
+  </section>
+
+  <button class="open" id="open">Ouvrir la caisse</button>
+  <div class="hint" id="hint"></div>
+
+  <div class="reveal" id="reveal">
+    <div class="card" id="card">
+      <div class="small">Tu as obtenu</div>
+      <div class="big-emoji" id="r-emoji"></div>
+      <h2 id="r-name"></h2>
+      <div class="wear">Neuf, sortie d'usine · Ultra rare</div>
+      <button id="again">Rouvrir une caisse</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const LOOTS = {
+    girl: { cls: 'girl', emoji: '👧', name: 'Bébé Fille', color: '#ff5fa2' },
+    boy:  { cls: 'boy',  emoji: '👦', name: 'Bébé Garçon', color: '#3fa9ff' },
+  };
+  const ITEM_W = 126;          // largeur item + marge
+  const COUNT = 60;            // nombre d'items dans la bande
+  const WIN_INDEX = 50;        // position du gagnant
+  const DURATION = 6500;       // ms
+
+  const strip = document.getElementById('strip');
+  const openBtn = document.getElementById('open');
+  const reveal = document.getElementById('reveal');
+  const card = document.getElementById('card');
+  const hint = document.getElementById('hint');
+
+  // Option : forcer le résultat via ?resultat=fille ou ?resultat=garcon
+  const forced = (new URLSearchParams(location.search).get('resultat') || '').toLowerCase();
+  const pick = () => forced.startsWith('fille') ? 'girl'
+    : forced.startsWith('gar') ? 'boy'
+    : (crypto.getRandomValues(new Uint32Array(1))[0] % 2 ? 'girl' : 'boy');
+  const rand = () => Math.random() < .5 ? 'girl' : 'boy';
+
+  function itemEl(key) {
+    const l = LOOTS[key];
+    const d = document.createElement('div');
+    d.className = 'item ' + l.cls;
+    d.innerHTML = `<div class="emoji">${l.emoji}</div><div class="name">★ ${l.name}</div>`;
+    return d;
+  }
+
+  function build(winner) {
+    strip.innerHTML = '';
+    for (let i = 0; i < COUNT; i++) strip.appendChild(itemEl(i === WIN_INDEX ? winner : rand()));
+  }
+
+  function resetStrip() {
+    strip.style.transition = 'none';
+    strip.style.transform = `translateX(${strip.parentElement.clientWidth / 2 - ITEM_W * 2}px)`;
+  }
+
+  // Sons (Web Audio, aucun fichier externe)
+  let ctx;
+  function beep(freq, dur = .03, vol = .08, type = 'square') {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = vol;
+      g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + dur);
+      o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + dur);
+    } catch (e) {}
+  }
+
+  function confetti(color) {
+    const colors = [color, '#ffd34d', '#ffffff'];
+    for (let i = 0; i < 90; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[i % colors.length];
+      c.style.animationDuration = 2 + Math.random() * 2.5 + 's';
+      c.style.animationDelay = Math.random() * .6 + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 5500);
+    }
+  }
+
+  function open() {
+    openBtn.disabled = true;
+    reveal.classList.remove('show');
+    hint.textContent = 'Ouverture en cours…';
+    const winner = pick();
+    build(winner);
+    resetStrip();
+    strip.getBoundingClientRect(); // force reflow
+
+    const center = strip.parentElement.clientWidth / 2;
+    const jitter = (Math.random() - .5) * (ITEM_W - 20); // atterrissage pas pile au centre
+    const target = center - (WIN_INDEX * ITEM_W + 60) + jitter;
+    strip.style.transition = `transform ${DURATION}ms cubic-bezier(.08,.6,.12,1)`;
+    strip.style.transform = `translateX(${target}px)`;
+
+    // Ticks quand un item passe sous le marqueur
+    let last = null;
+    const t0 = performance.now();
+    (function tick() {
+      const m = new DOMMatrix(getComputedStyle(strip).transform);
+      const idx = Math.floor((center - m.m41) / ITEM_W);
+      if (idx !== last) { last = idx; beep(900 + Math.random() * 200); if (navigator.vibrate) navigator.vibrate(5); }
+      if (performance.now() - t0 < DURATION) requestAnimationFrame(tick);
+    })();
+
+    setTimeout(() => {
+      const l = LOOTS[winner];
+      card.className = 'card ' + l.cls;
+      document.getElementById('r-emoji').textContent = l.emoji;
+      document.getElementById('r-name').textContent = l.name;
+      reveal.classList.add('show');
+      beep(523, .15, .12, 'triangle'); setTimeout(() => beep(659, .15, .12, 'triangle'), 120);
+      setTimeout(() => beep(784, .35, .12, 'triangle'), 240);
+      if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
+      confetti(l.color);
+      openBtn.disabled = false;
+      hint.textContent = '';
+    }, DURATION + 300);
+  }
+
+  openBtn.addEventListener('click', open);
+  document.getElementById('again').addEventListener('click', () => { reveal.classList.remove('show'); open(); });
+  build(rand()); resetStrip();
+  window.addEventListener('resize', () => { if (!openBtn.disabled) resetStrip(); });
+})();
+</script>
+</body>
+</html>
