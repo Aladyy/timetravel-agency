@@ -166,17 +166,88 @@
     strip.style.transform = `translateX(${strip.parentElement.clientWidth / 2 - ITEM_W * 2}px)`;
   }
 
-  // Sons (Web Audio, aucun fichier externe)
-  let ctx;
-  function beep(freq, dur = .03, vol = .08, type = 'square') {
-    try {
-      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+  // ===== Sons (synthétisés en Web Audio, aucun fichier externe) =====
+  const SFX = (() => {
+    let ctx, master, verb;
+    function init() {
+      try {
+        if (!ctx) {
+          try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const comp = ctx.createDynamicsCompressor();
+          master = ctx.createGain(); master.gain.value = .9;
+          master.connect(comp); comp.connect(ctx.destination);
+          // Réverbe maison (impulsion de bruit qui décroît)
+          verb = ctx.createConvolver();
+          const len = ctx.sampleRate * 2, ir = ctx.createBuffer(2, len, ctx.sampleRate);
+          for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c);
+            for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+          verb.buffer = ir;
+          const vg = ctx.createGain(); vg.gain.value = .4; verb.connect(vg); vg.connect(master);
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (e) {}
+    }
+    const now = () => ctx.currentTime;
+    function env(g, t, a, peak, d) {
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + a);
+      g.gain.exponentialRampToValueAtTime(.0001, t + a + d);
+    }
+    function tone(type, f, t, a, peak, d, f2, wet) {
       const o = ctx.createOscillator(), g = ctx.createGain();
-      o.type = type; o.frequency.value = freq; g.gain.value = vol;
-      g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + dur);
-      o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + dur);
-    } catch (e) {}
-  }
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + a + d);
+      env(g, t, a, peak, d); o.connect(g); g.connect(master); if (wet) g.connect(verb);
+      o.start(t); o.stop(t + a + d + .05);
+    }
+    function noise(t, dur, peak, type, f, q, f2, wet, attack = .002) {
+      const n = Math.ceil(ctx.sampleRate * (dur + attack + .05)), b = ctx.createBuffer(1, n, ctx.sampleRate);
+      const d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = b; fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f, t);
+      if (f2) fl.frequency.exponentialRampToValueAtTime(f2, t + attack + dur);
+      env(g, t, attack, peak, dur); src.connect(fl); fl.connect(g); g.connect(master); if (wet) g.connect(verb);
+      src.start(t);
+    }
+    const ok = () => ctx && ctx.state !== 'closed';
+    return {
+      init,
+      // Clic du défilement : sec, métallique, légèrement différent à chaque fois
+      tick() { if (!ok()) return; const t = now(), v = 1 + (Math.random() - .5) * .12;
+        noise(t, .025, .55, 'bandpass', 4200 * v, 3);
+        tone('square', 1900 * v, t, .001, .07, .025);
+        tone('triangle', 3100 * v, t, .001, .05, .04); },
+      // Ouverture de la caisse : deux loquets qui claquent + souffle qui monte
+      open() { if (!ok()) return; const t = now();
+        [0, .11].forEach((dt, i) => {
+          noise(t + dt, .06, .7, 'highpass', 1800, 1);
+          tone('square', 260 - i * 60, t + dt, .001, .22, .09, 90);
+          tone('sine', 120, t + dt, .001, .4, .12, 50);
+        });
+        noise(t + .18, .55, .3, 'bandpass', 350, 1.5, 3500, true, .15);
+        tone('sawtooth', 110, t + .2, .05, .05, .5, 440, true); },
+      // Suspense avant l'arrêt
+      riser(dur) { if (!ok()) return; const t = now();
+        noise(t, dur, .18, 'bandpass', 400, 4, 5000, true, dur * .9);
+        tone('sine', 220, t, dur * .9, .08, .1, 880); },
+      // Arrêt de la bande
+      land() { if (!ok()) return; const t = now();
+        noise(t, .08, .6, 'lowpass', 2500, 1, 300); tone('sine', 160, t, .002, .5, .18, 60); },
+      // LE DROP
+      drop() { if (!ok()) return; const t = now();
+        tone('sine', 140, t, .005, 1, 1.1, 32);                       // sub boom
+        noise(t, .6, .7, 'lowpass', 1200, 1, 80);                      // impact
+        [523.25, 659.25, 783.99, 1046.5].forEach(f => {               // accord brillant
+          tone('sawtooth', f, t, .01, .06, 1.6, null, true);
+          tone('triangle', f * 2, t, .01, .04, 1.2, null, true); });
+        [1046.5, 1318.5, 1568, 2093, 2637, 3136].forEach((f, i) =>   // arpège scintillant
+          tone('triangle', f, t + .08 + i * .065, .003, .16, .45, null, true));
+        noise(t + .1, 1.4, .18, 'highpass', 7000, 1, null, true, .05); // shimmer
+        tone('sine', 1568, t + .55, .005, .12, 1.4, null, true);
+        tone('sine', 2093, t + .62, .005, .1, 1.6, null, true); },
+    };
+  })();
 
   function confetti(color) {
     const colors = [color, '#ffd34d', '#ffffff'];
@@ -193,6 +264,7 @@
   }
 
   function open() {
+    SFX.init(); SFX.open();
     openBtn.disabled = true;
     reveal.classList.remove('show');
     hint.textContent = 'Ouverture en cours…';
@@ -213,9 +285,12 @@
     (function tick() {
       const m = new DOMMatrix(getComputedStyle(strip).transform);
       const idx = Math.floor((center - m.m41) / ITEM_W);
-      if (idx !== last) { last = idx; beep(900 + Math.random() * 200); if (navigator.vibrate) navigator.vibrate(5); }
+      if (idx !== last) { last = idx; SFX.tick(); if (navigator.vibrate) navigator.vibrate(5); }
       if (performance.now() - t0 < DURATION) requestAnimationFrame(tick);
     })();
+
+    setTimeout(() => SFX.riser(1.6), DURATION - 1600);
+    setTimeout(() => SFX.land(), DURATION);
 
     setTimeout(() => {
       const l = LOOTS[winner];
@@ -223,8 +298,7 @@
       document.getElementById('r-emoji').textContent = l.emoji;
       document.getElementById('r-name').textContent = l.name;
       reveal.classList.add('show');
-      beep(523, .15, .12, 'triangle'); setTimeout(() => beep(659, .15, .12, 'triangle'), 120);
-      setTimeout(() => beep(784, .35, .12, 'triangle'), 240);
+      SFX.drop();
       if (navigator.vibrate) navigator.vibrate([80, 40, 160]);
       confetti(l.color);
       openBtn.disabled = false;
